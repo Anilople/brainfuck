@@ -172,7 +172,7 @@ static void rightBracket()
 }
 
 // return -1 if there is no code to run
-int brainfuckOnce()
+void brainfuckOnce()
 {
     switch(currentCode())
     {
@@ -203,15 +203,6 @@ int brainfuckOnce()
     default:
         break;
     }
-
-    if(codeEnd()){
-        // printf("there is no code to run\n");
-        return -1;
-    }
-    else{
-        nextCode();
-        return 1;
-    }
 }
 
 void getBrainfuckCode(const char *str)
@@ -231,8 +222,10 @@ void printBrainfuckState()
 void brainfuck(const char *str)
 {
     getBrainfuckCode(str);
-    while(brainfuckOnce() != -1)
+    while( !codeEnd() )
     {
+        brainfuckOnce();
+        nextCode();
         //printBrainfuckState();
     }
 }
