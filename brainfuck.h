@@ -2,57 +2,58 @@
 #include<string.h>
 #include<stdlib.h>
 
-// save brainfuck code here
-static char code[10000];
-static int codeIndex; // mark which char wound run
+// // save brainfuck code here
+// static char code[10000];
+// static int codeIndex; // mark which char wound run
 
-static char memory[100];
-static int memoryIndex; // mark current memory
+// static char memory[100];
+// static int memoryIndex; // mark current memory
 
-char currentCode()
+struct Brain
 {
+    char code[10000]; // save instruction
+    int codeIndex; // mark which char wound run
+    char memory[100]; // the memory brainfuck use
+    int memoryIndex; // mark current memory
+};
+
+char currentCode(const struct Brain *brain)
+{
+    const char *code = brain->code;
+    const int codeIndex = brain->codeIndex;
     return code[codeIndex];
 }
 
-char currentValue()
+char currentValue(const struct Brain *brain)
 {
+    const char *memory = brain->memory;
+    const int memoryIndex = brain->memoryIndex;
     return memory[memoryIndex];
 }
 
 // go to next code should be
-static void nextCode()
+static void nextCode(struct Brain *brain)
 {
-    codeIndex++;
+    brain->codeIndex += 1;
 }
 
-static int codeEnd()
+// judge code run over or not
+static int codeEnd(const struct Brain *brain)
 {
-    return currentCode() == '\0';
+    return currentCode(brain) == '\0';
 }
 
 // > ++ptr;
-static void nextMemory()
+static void nextMemory(struct Brain *brain)
 {
-    memoryIndex++;
+    brain->memoryIndex += 1;
 }
 
-// static void previousCode()
-// {
-//     codeIndex--;
-//     if(codeIndex < 0){
-//         printf("memory out of range\n");
-//         exit(0);
-//     }
-//     else{
-//         ;
-//     }
-// }
-
 // < --ptr;
-static void previousMemory()
+static void previousMemory(struct Brain *brain)
 {
-    memoryIndex--;
-    if(memoryIndex < 0){
+    brain->memoryIndex -= 1;
+    if(brain->memoryIndex < 0){
         printf("memory out of range\n");
         exit(0);
     }
@@ -62,43 +63,49 @@ static void previousMemory()
 }
 
 // + ++*ptr;
-static void plusMemory()
+static void plusMemory(struct Brain *brain)
 {
-    if(memory[memoryIndex] == 255){
+    if(currentValue(brain) == 255){
         printf("value over flow up\n");
     }
     else{
         ;
     }
 
-    memory[memoryIndex]++;
+    brain->memory[brain->memoryIndex] += 1;
 }
 
 // - --*ptr;
-static void minusMemory()
+static void minusMemory(struct Brain *brain)
 {
-    if(memory[memoryIndex] == 0){
+    if(currentValue(brain) == 0){
         printf("value over flow down\n");
     }
     else{
         ;
     }
-    memory[memoryIndex]--;
+
+    brain->memory[brain->memoryIndex] -= 1;
 }
 
 // . putchar(*ptr);
-static void output()
+static void output(const struct Brain *brain)
 {
-    char value = memory[memoryIndex];
+    char value = currentValue(brain);
     putchar(value);
     // printf("%u\n", (unsigned)value);
 }
 
+static void setValue(struct Brain *brain, char value)
+{
+    brain->memory[brain->memoryIndex] = value;
+}
+
 // , *ptr =getch();
-static void input()
+static void input(struct Brain *brain)
 {
     char in = getchar();
-    memory[memoryIndex] = in;
+    setValue(brain, in);
 }
 
 // find ']' in next codes
@@ -136,16 +143,16 @@ static int previousLeft(const char *code, int nowIndex)
 }
 
 // [ while (*ptr) {
-static void leftBracket()
+static void leftBracket(struct Brain *brain)
 {
-    if(currentCode() != '['){
+    if(currentCode(brain) != '['){
         printf("[ not in current code\n");
         exit(0);
     }
     else{
-        if(currentValue() == 0){ // jump
-            int rightBracketIndex = nextRight(code, codeIndex);
-            codeIndex = rightBracketIndex + 1;
+        if(currentValue(brain) == 0){ // jump
+            int rightBracketIndex = nextRight(brain->code, brain->codeIndex);
+            brain->codeIndex = rightBracketIndex + 1;
         }
         else{
             ;
@@ -154,16 +161,16 @@ static void leftBracket()
 }
 
 // ] }
-static void rightBracket()
+static void rightBracket(struct Brain *brain)
 {
-    if(currentCode() != ']'){
+    if(currentCode(brain) != ']'){
         printf("] not in current code\n");
         exit(0);
     }
     else{
-        if(currentValue() != 0){ // jump
-            int leftBracketIndex = previousLeft(code, codeIndex);
-            codeIndex = leftBracketIndex;
+        if(currentValue(brain) != 0){ // jump
+            int leftBracketIndex = previousLeft(brain->code, brain->codeIndex);
+            brain->codeIndex = leftBracketIndex;
         }
         else{
             ;
@@ -172,60 +179,85 @@ static void rightBracket()
 }
 
 // return -1 if there is no code to run
-void brainfuckOnce()
+void brainfuckOnce(struct Brain *brain)
 {
-    switch(currentCode())
+    switch(currentCode(brain))
     {
     case '>':
-        nextMemory();
+        nextMemory(brain);
         break;
     case '<':
-        previousMemory();
+        previousMemory(brain);
         break;
     case '+':
-        plusMemory();
+        plusMemory(brain);
         break;
     case '-':
-        minusMemory();
+        minusMemory(brain);
         break;
     case '.': // output
-        output();
+        output(brain);
         break;
     case ',': // input
-        input();
+        input(brain);
         break;
     case '[':
-        leftBracket();
+        leftBracket(brain);
         break;
     case ']':
-        rightBracket();
+        rightBracket(brain);
         break;
     default:
         break;
     }
 }
 
-void getBrainfuckCode(const char *str)
+void initBrainfuckCode(struct Brain *brain, const char *str)
 {
-    strcpy(code, str);
+    strcpy(brain->code, str);
+    brain->codeIndex = 0;
+    int i;
+    for(i = 0; i < 100; i++)
+    {
+        brain->memory[i] = 0;
+    }
+    brain->memoryIndex = 0;
 }
 
-void printBrainfuckState()
+void printBrainfuckState(const struct Brain *brain)
 {
+    const int codeIndex = brain->codeIndex;
+    const char *code = brain->code;
     printf("code index:%d\n", codeIndex);
     printf("code value:%c\n", code[codeIndex]);
+    const int memoryIndex = brain->memoryIndex;
+    const char *memory = brain->memory;
     printf("memory index:%u\n", memoryIndex);
     printf("memory value:%u\n", memory[memoryIndex]);
     printf("--------------------\n");
 }
 
+// void brainfuck(const char *str)
+// {
+//     getBrainfuckCode(str);
+//     while( !codeEnd() )
+//     {
+//         brainfuckOnce();
+//         nextCode();
+//         //printBrainfuckState();
+//     }
+// }
+
 void brainfuck(const char *str)
 {
-    getBrainfuckCode(str);
-    while( !codeEnd() )
+    struct Brain it;
+    initBrainfuckCode(&it, str);
+    while( !codeEnd(&it) )
     {
-        brainfuckOnce();
-        nextCode();
-        //printBrainfuckState();
+        brainfuckOnce(&it);
+        nextCode(&it);
+        // printBrainfuckState(&it);
+        // char temp;
+        // scanf("%c", &temp);
     }
 }
