@@ -27,6 +27,9 @@ void interpreter(struct Node * node)
                 // update bufferLength and buffer
                 bufferLength = newBufferLength;
                 buffer = newBuffer;
+                
+                // free old memory
+                free(oldBuffer);
             }
         }
 
