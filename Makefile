@@ -1,3 +1,5 @@
+all: lexer.o parser.o
+
 lexer.o: lexer.h lexer.c
 	gcc -Wall lexer.c -o lexer.o
 

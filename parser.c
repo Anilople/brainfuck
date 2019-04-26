@@ -199,9 +199,9 @@ struct Token getNextToken()
 int main(int argc, char * argv[])
 {
     struct Nodes * nodes = parser(haveNextToken, getNextToken);
-    NodePrint(0, 0, nodes->head);
-    printf("\n#########################################\n");
-    NodePrintOrigin(nodes->head);
+    // NodePrint(0, 0, nodes->head);
+    // printf("\n#########################################\n");
+    // NodePrintOrigin(nodes->head);
     interpreter(nodes->head);
     return 0;
 }
